@@ -59,7 +59,8 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 	// check for file open errors
 	if(!file)
 	{
-		throw "Error opening file:"; 
+		std::cout << "Error opening file" << file_name << std::endl; 
+		return; 
 	}
 
 	// get lines and fill out the vector
@@ -88,7 +89,8 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 			}
 			else
 			{
-				throw "Error: Too many numbers on a line"; 
+				std::cout << "Error: Too many numbers on a line" << std::endl; 
+				return; 
 			}
 			count++; 
 		}
