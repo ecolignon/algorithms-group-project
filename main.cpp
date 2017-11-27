@@ -13,6 +13,11 @@
 #include <fstream>
 #include <iostream>
 #include <sstream> 
+#include <cstdlib>
+#include <ctime>
+#include <limits>
+#include <string.h>
+#include <math.h> 
 
 struct tsp_coordinate 
 {
@@ -21,12 +26,24 @@ struct tsp_coordinate
 	int y_coordinate; 	// third integer on .txt file line
 }; 
 
-// function prototype for TSP vector generator
-void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v);
+struct solution
+{
+    std::vector<struct tsp_coordinate> path;
+    int full_distance;
+};
 
+// prototype for TSP vector generator
+void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v);
+// prototype for determining nearest neighbour route
+struct solution get_solution(std::vector<struct tsp_coordinate> v);
+// prototype for getting distance between two coordinates
+int get_distance(struct tsp_coordinate place_a, struct tsp_coordinate place_b);
 
 int main(int argc, char **argv)
 {
+    // seed random
+    srand(static_cast<unsigned int>(time(NULL)));
+    
 	// store the argument file name that was passed 
 	// on the commmand line when the program
 	// was run 
@@ -45,11 +62,44 @@ int main(int argc, char **argv)
 		std::cout << "Y: " << tsp_vector[i].y_coordinate << std::endl;
 		std::cout << std::endl << std::endl; 
 	}*/
+    
+    //determine tsp solution via NN
+    struct solution tsp_solution = get_solution(tsp_vector);
+    
+    //test: show solution
+    std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
+    std::cout << "Path: " << std::endl;
+    for(int j = 0; j < tsp_solution.path.size(); j++)
+    {
+        std::cout << tsp_solution.path[j].identifier << std::endl;
+    }
+    
+    if(strcmp(argument_file_name, "tsp_example_1.txt") == 0)
+    {
+        double ratio = (double)tsp_solution.full_distance/108159;
+        std::cout << "Ratio: " << ratio << std::endl;
+    }
+    else if(strcmp(argument_file_name, "tsp_example_2.txt") == 0)
+    {
+        double ratio = (double)tsp_solution.full_distance/2579;
+        std::cout << "Ratio: " << ratio << std::endl;
+    }
+    else if(strcmp(argument_file_name, "tsp_example_3.txt") == 0)
+    {
+        double ratio = (double)tsp_solution.full_distance/1573084;
+        std::cout << "Ratio: " << ratio << std::endl;
+    }
 
-	return 0; 
+
+	return 0;
 
 }
 
+
+/*********************************************************************
+** Description: generate_tsp_vector opens the file name passed in, 
+** it reads the file to add it to a passed vector of tsp_coordinates
+*********************************************************************/
 void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 {
 	// declare variable that will hold file & line data 
@@ -101,4 +151,86 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 	}
 	//close the file 
 	file.close(); 
+}
+
+
+/*********************************************************************
+** Description: get_solution takes a vector of tsp coordinates and 
+** finds an optimal path and the full distance of the path for tsp
+*********************************************************************/
+struct solution get_solution(std::vector<struct tsp_coordinate> v)
+{
+    // declare a solution struct
+    struct solution tsp_solution;
+    
+    // get a random index, this index will map to the start coordinate
+    int start_index = 0; //rand()%(static_cast<unsigned int>(v.size()));
+    // get the starting place
+    struct tsp_coordinate start = v[0];
+    // add the starting place to the solution path
+    tsp_solution.path.push_back(start);
+    // initialize tsp_solution distance to 0
+    tsp_solution.full_distance = 0;
+    // mark as traversed, by removing from v
+    v.erase(v.begin() + start_index);
+    
+    // here, we'll loop through the vector of coordinates till all coordinates have
+    // been traverse(removed)
+    while(v.size() > 0)
+    {
+        // initialize the current smallest distance as infinity
+        int smallest_distance = std::numeric_limits<int>::max();
+        // declare variable to hold index mapping to smallest distance
+        int sd_index = 0;
+        
+        // for every coordinate check if distance is
+        // less than smallest, update the two variables if so
+        for(int i = 0; i < v.size(); i++)
+        {
+            int curr_distance = get_distance(start, v[i]);
+            
+            if(curr_distance < smallest_distance)
+            {
+                sd_index = i;
+                smallest_distance = curr_distance;
+            }
+        }
+        
+        // add the coordinate with the smallest distance to the solution path
+        tsp_solution.path.push_back(v[sd_index]);
+        // add the solution distance to the current solution distance
+        tsp_solution.full_distance = tsp_solution.full_distance + smallest_distance;
+        // set the coordinate with the smallest distance as the new starting place
+        start = v[sd_index];
+        // mark it as traversed by removing it from v
+        v.erase(v.begin() + sd_index);
+    }
+    
+    return tsp_solution;
+    
+}
+
+
+/*********************************************************************
+** Description: get_distance takes to tsp_coordinates and returns 
+** the distance between them
+*********************************************************************/
+int get_distance(struct tsp_coordinate place_a, struct tsp_coordinate place_b)
+{
+    // get x and y coordinates for each tsp_coordinate as doubles
+    double x_a = static_cast<double>(place_a.x_coordinate);
+    double x_b = static_cast<double>(place_b.x_coordinate);
+    double y_a = static_cast<double>(place_a.y_coordinate);
+    double y_b = static_cast<double>(place_b.y_coordinate);
+    // get legs of the triangle
+    double leg_x = x_a - x_b;
+    double leg_y = y_a - y_b;
+    
+    // get the hypotenuse
+    double result = hypot(leg_x, leg_y);
+    // update rounded integer version
+    int rounded = static_cast<unsigned int>(round(result));
+    
+    return rounded;
+    
 }
