@@ -6,7 +6,8 @@
 ** 3 numbers denoting an integer identifier, an x coordinate, and a 
 ** y coordinate. The file input is stored in a vector. It is then used 
 ** to determine a solution to the traveling saleman problem given the 
-** locations and coordinates.  
+** locations and coordinates. The alogrithm used is the Nearest-
+** Neighbor Algorithm.
 *********************************************************************/
 #include <vector>
 #include <string>
@@ -38,6 +39,11 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 struct solution get_solution(std::vector<struct tsp_coordinate> v);
 // prototype for getting distance between two coordinates
 int get_distance(struct tsp_coordinate place_a, struct tsp_coordinate place_b);
+// prototype for saving solution into text file
+int save_solution(struct solution tsp_solution, char file_name[]);
+// prototype for displaying the solution in console
+void display_solution(struct solution tsp_solution);
+
 
 int main(int argc, char **argv)
 {
@@ -66,6 +72,7 @@ int main(int argc, char **argv)
     //determine tsp solution via NN
     struct solution tsp_solution = get_solution(tsp_vector);
     
+/* 
     //test: show solution
     std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
     std::cout << "Path: " << std::endl;
@@ -89,7 +96,13 @@ int main(int argc, char **argv)
         double ratio = (double)tsp_solution.full_distance/1573084;
         std::cout << "Ratio: " << ratio << std::endl;
     }
-
+*/
+    // if saving the solution fails for some reason, output the
+    // solution to the console
+    if (save_solution(tsp_solution, argument_file_name) < 0)
+    {
+        display_solution(tsp_solution);
+    }
 
 	return 0;
 
@@ -233,4 +246,51 @@ int get_distance(struct tsp_coordinate place_a, struct tsp_coordinate place_b)
     
     return rounded;
     
+}
+
+/*********************************************************************
+** Description: save_solution outputs the given solution into a text
+** file, appending ".tour" to the name of the input. The first line
+** of the text file is the total distance travelled, and the rest of
+** the lines give the order in which the cities were visited
+** returns 1 on error, 0 on success
+*********************************************************************/
+int save_solution(struct solution tsp_solution, char file_name[])
+{
+    //append ".tour" to the file name
+    strcat(file_name, ".tour");
+    //create file with appended name
+    std::ofstream file(file_name); 
+    
+    // check for file open errors
+    if(!file)
+    {
+        std::cout << "Error opening file" << file_name << std::endl; 
+        return 1; 
+    }
+
+    file << tsp_solution.full_distance << std::endl;
+
+    for(int j = 0; j < tsp_solution.path.size(); j++)
+    {
+        file << tsp_solution.path[j].identifier << std::endl;
+    }
+
+    file.close();
+
+    return 0;
+}
+
+/*********************************************************************
+** Description: display_solution outputs the solution to the console,
+** including labels.
+*********************************************************************/
+void display_solution(struct solution tsp_solution)
+{
+    std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
+    std::cout << "Path: " << std::endl;
+    for(int j = 0; j < tsp_solution.path.size(); j++)
+    {
+        std::cout << tsp_solution.path[j].identifier << std::endl;
+    }
 }
