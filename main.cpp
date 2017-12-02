@@ -186,13 +186,20 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 *********************************************************************/
 struct solution get_solution(std::vector<struct tsp_coordinate> v)
 {
-    int max_try_solutions = v.size() ;
+    int max_try_solutions = v.size();
     // vector to store solutions
     std::vector<struct solution> solution_vector;
     // vector to remove traversed coordinates from;
     std::vector<struct tsp_coordinate> copy_of_v;
+    std::vector<struct tsp_coordinate> copy_of_v2;
+    if(max_try_solutions >= 200){
+        max_try_solutions = 200;
+    }
     
-    if(max_try_solutions >= 500) max_try_solutions = 500;
+    
+    // init copy 1 of v;
+    copy_of_v = v;
+        
     // generate nearest neighbour solutions trying every coordinate as the start
     for(int j = 0; j < max_try_solutions; j ++)
     {
@@ -200,21 +207,21 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
         struct solution tsp_solution;
 
         // grab a random index to check
-        int start_index = rand()%v.size();
+        int start_index = rand()%copy_of_v.size();
         // get the starting place
-        struct tsp_coordinate start = v[start_index];
+        struct tsp_coordinate start = copy_of_v[start_index];
         // add the starting place to the solution path
         tsp_solution.path.push_back(start);
         // initialize tsp_solution distance to 0
         tsp_solution.full_distance = 0;
         // reinit the copy of v
-        copy_of_v = v;
+        copy_of_v2 = v;
         // mark as traversed, by removing from copy of v
-        copy_of_v.erase(copy_of_v.begin() + start_index);
+        copy_of_v2.erase(copy_of_v2.begin() + start_index);
         
         // here, we'll loop through the vector of coordinates till all coordinates have
         // been traverse(removed)
-        while(copy_of_v.size() > 0)
+        while(copy_of_v2.size() > 0)
         {
             // initialize the current smallest distance as infinity
             int smallest_distance = std::numeric_limits<int>::max();
@@ -223,9 +230,9 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
             int i;
             // for every coordinate check if distance is
             // less than smallest, update the two variables if so
-            for(i = 0; i < copy_of_v.size(); i++)
+            for(i = 0; i < copy_of_v2.size(); i++)
             {
-                int curr_distance = get_distance(start, copy_of_v[i]);
+                int curr_distance = get_distance(start, copy_of_v2[i]);
                 
                 if(curr_distance < smallest_distance)
                 {
@@ -235,13 +242,13 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
             }
             
             // add the coordinate with the smallest distance to the solution path
-            tsp_solution.path.push_back(copy_of_v[sd_index]);
+            tsp_solution.path.push_back(copy_of_v2[sd_index]);
             // add the solution distance to the current solution distance
             tsp_solution.full_distance = tsp_solution.full_distance + smallest_distance;
             // set the coordinate with the smallest distance as the new starting place
-            start = copy_of_v[sd_index];
+            start = copy_of_v2[sd_index];
             // mark it as traversed by removing it from v
-            copy_of_v.erase(copy_of_v.begin() + sd_index);
+            copy_of_v2.erase(copy_of_v2.begin() + sd_index);
         }
         // calculate the distance back to start
         int last_distance = get_distance(tsp_solution.path[0], tsp_solution.path[tsp_solution.path.size() - 1]);
@@ -250,7 +257,7 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
         //add the solution to the solution vector
         solution_vector.push_back(tsp_solution);
         // mark solution as attempted by removing from v
-        v.erase(v.begin() + start_index);
+        copy_of_v.erase(copy_of_v.begin() + start_index);
         
     }
     
@@ -276,6 +283,7 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
     return solution_vector[spd_index];
     
 }
+
 
 
 /*********************************************************************

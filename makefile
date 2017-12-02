@@ -19,8 +19,9 @@ CXXFLAGS += -Wall
 CXXFLAGS += -pedantic-errors
 CXXFLAGS += -g
 CXXFLAGS += -O2
+CXXFLAGS += -Wc++11-extensions
 
-#
+
 # Source Files
 #
 SRCS = main.cpp
@@ -45,7 +46,7 @@ clean:
 	rm *.o $(PROJ) *.zip *.tour
 
 solutions:
-	$(PROJ) tsp_example_3.txt
+#	$(PROJ) tsp_example_3.txt
 	$(PROJ) tsp_example_2.txt
 	$(PROJ) tsp_example_1.txt
 	$(PROJ) test-input-1.txt
