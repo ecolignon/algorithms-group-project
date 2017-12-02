@@ -19,6 +19,9 @@
 #include <limits>
 #include <string.h>
 #include <math.h> 
+#include <time.h>
+#include <chrono>
+
 
 struct tsp_coordinate 
 {
@@ -56,10 +59,14 @@ int main(int argc, char **argv)
 	char* argument_file_name = argv[1]; 
 	// declare the vector for holding our coordinates
 	std::vector<tsp_coordinate> tsp_vector; 
-
-	//generate a tsp vector from the file name
+    
+    // start clock for timer
+    auto start = std::chrono::high_resolution_clock::now();
+	
+    //generate a tsp vector from the file name
 	generate_tsp_vector(argument_file_name, tsp_vector); 
-
+    
+    auto middle = std::chrono::high_resolution_clock::now();
 	//test generate_tsp_vector functionality
 	/*for(int i= 0; i < tsp_vector.size(); i++)
 	{
@@ -71,8 +78,14 @@ int main(int argc, char **argv)
     
     //determine tsp solution via NN
     struct solution tsp_solution = get_solution(tsp_vector);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> fullRunTime = (end - start) * 1000;
+    std::chrono::duration<double> solRunTime = (end - middle) * 1000;
     
-/* 
+    std::cout << "Full TSP run time for " << argument_file_name
+    << " is " << fullRunTime.count() << "ms" << std::endl;
+ 
+/*
     //test: show solution
     std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
     std::cout << "Path: " << std::endl;
@@ -103,7 +116,7 @@ int main(int argc, char **argv)
     {
         display_solution(tsp_solution);
     }
-
+    
 	return 0;
 
 }
@@ -179,22 +192,22 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
     std::vector<struct tsp_coordinate> copy_of_v;
     
     // generate nearest neighbour solutions trying every coordinate as the start
-    for(int j = 0; j < v.size(); j ++)
+    for(int j = 0; j < 500; j ++)
     {
         // declare a solution struct
         struct solution tsp_solution;
 
-        // j is the start index
-        int start_index = j; ;
+        // grab a random index to check
+        int start_index = rand()%v.size();
         // get the starting place
-        struct tsp_coordinate start = v[j];
+        struct tsp_coordinate start = v[start_index];
         // add the starting place to the solution path
         tsp_solution.path.push_back(start);
         // initialize tsp_solution distance to 0
         tsp_solution.full_distance = 0;
         // reinit the copy of v
         copy_of_v = v;
-        // mark as traversed, by removing from v
+        // mark as traversed, by removing from copy of v
         copy_of_v.erase(copy_of_v.begin() + start_index);
         
         // here, we'll loop through the vector of coordinates till all coordinates have
@@ -234,6 +247,8 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
         
         //add the solution to the solution vector
         solution_vector.push_back(tsp_solution);
+        // mark solution as attempted by removing from v
+        v.erase(v.begin() + start_index);
         
     }
     
