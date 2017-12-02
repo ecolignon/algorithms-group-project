@@ -192,7 +192,7 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
     // vector to remove traversed coordinates from;
     std::vector<struct tsp_coordinate> copy_of_v;
     
-    if(v.size() >= 500) max_try_solutions;
+    if(v.size() >= 500) max_try_solutions = 500;
     // generate nearest neighbour solutions trying every coordinate as the start
     for(int j = 0; j < max_try_solutions; j ++)
     {
