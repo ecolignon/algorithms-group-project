@@ -186,13 +186,13 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 *********************************************************************/
 struct solution get_solution(std::vector<struct tsp_coordinate> v)
 {
-    int max_try_solutions;
+    int max_try_solutions = v.size() ;
     // vector to store solutions
     std::vector<struct solution> solution_vector;
     // vector to remove traversed coordinates from;
     std::vector<struct tsp_coordinate> copy_of_v;
     
-    if(v.size() >= 500) max_try_solutions = 500;
+    if(max_try_solutions >= 500) max_try_solutions = 500;
     // generate nearest neighbour solutions trying every coordinate as the start
     for(int j = 0; j < max_try_solutions; j ++)
     {
