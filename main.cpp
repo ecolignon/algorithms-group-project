@@ -173,56 +173,90 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 *********************************************************************/
 struct solution get_solution(std::vector<struct tsp_coordinate> v)
 {
-    // declare a solution struct
-    struct solution tsp_solution;
+    // vector to store solutions
+    std::vector<struct solution> solution_vector;
+    // vector to remove traversed coordinates from;
+    std::vector<struct tsp_coordinate> copy_of_v;
     
-    // get a random index, this index will map to the start coordinate
-    int start_index = 0; //rand()%(static_cast<unsigned int>(v.size()));
-    // get the starting place
-    struct tsp_coordinate start = v[0];
-    // add the starting place to the solution path
-    tsp_solution.path.push_back(start);
-    // initialize tsp_solution distance to 0
-    tsp_solution.full_distance = 0;
-    // mark as traversed, by removing from v
-    v.erase(v.begin() + start_index);
-    
-    // here, we'll loop through the vector of coordinates till all coordinates have
-    // been traverse(removed)
-    while(v.size() > 0)
+    // generate nearest neighbour solutions trying every coordinate as the start
+    for(int j = 0; j < v.size(); j ++)
     {
-        // initialize the current smallest distance as infinity
-        int smallest_distance = std::numeric_limits<int>::max();
-        // declare variable to hold index mapping to smallest distance
-        int sd_index = 0;
-        int i;
-        // for every coordinate check if distance is
-        // less than smallest, update the two variables if so
-        for(i = 0; i < v.size(); i++)
-        {
-            int curr_distance = get_distance(start, v[i]);
-            
-            if(curr_distance < smallest_distance)
-            {
-                sd_index = i;
-                smallest_distance = curr_distance;
-            }
-        }
+        // declare a solution struct
+        struct solution tsp_solution;
+
+        // j is the start index
+        int start_index = j; ;
+        // get the starting place
+        struct tsp_coordinate start = v[j];
+        // add the starting place to the solution path
+        tsp_solution.path.push_back(start);
+        // initialize tsp_solution distance to 0
+        tsp_solution.full_distance = 0;
+        // reinit the copy of v
+        copy_of_v = v;
+        // mark as traversed, by removing from v
+        copy_of_v.erase(copy_of_v.begin() + start_index);
         
-        // add the coordinate with the smallest distance to the solution path
-        tsp_solution.path.push_back(v[sd_index]);
-        // add the solution distance to the current solution distance
-        tsp_solution.full_distance = tsp_solution.full_distance + smallest_distance;
-        // set the coordinate with the smallest distance as the new starting place
-        start = v[sd_index];
-        // mark it as traversed by removing it from v
-        v.erase(v.begin() + sd_index);
+        // here, we'll loop through the vector of coordinates till all coordinates have
+        // been traverse(removed)
+        while(copy_of_v.size() > 0)
+        {
+            // initialize the current smallest distance as infinity
+            int smallest_distance = std::numeric_limits<int>::max();
+            // declare variable to hold index mapping to smallest distance
+            int sd_index = 0;
+            int i;
+            // for every coordinate check if distance is
+            // less than smallest, update the two variables if so
+            for(i = 0; i < copy_of_v.size(); i++)
+            {
+                int curr_distance = get_distance(start, copy_of_v[i]);
+                
+                if(curr_distance < smallest_distance)
+                {
+                    sd_index = i;
+                    smallest_distance = curr_distance;
+                }
+            }
+            
+            // add the coordinate with the smallest distance to the solution path
+            tsp_solution.path.push_back(copy_of_v[sd_index]);
+            // add the solution distance to the current solution distance
+            tsp_solution.full_distance = tsp_solution.full_distance + smallest_distance;
+            // set the coordinate with the smallest distance as the new starting place
+            start = copy_of_v[sd_index];
+            // mark it as traversed by removing it from v
+            copy_of_v.erase(copy_of_v.begin() + sd_index);
+        }
+        // calculate the distance back to start
+        int last_distance = get_distance(tsp_solution.path[0], tsp_solution.path[tsp_solution.path.size() - 1]);
+        tsp_solution.full_distance = tsp_solution.full_distance + last_distance;
+        
+        //add the solution to the solution vector
+        solution_vector.push_back(tsp_solution);
+        
     }
     
-    int last_distance = get_distance(tsp_solution.path[0], tsp_solution.path[tsp_solution.path.size() - 1]);
-    tsp_solution.full_distance = tsp_solution.full_distance + last_distance;
+    // now we start our search for the path with the smallest distance
+    // based on our generated nearest neighbour solutions
     
-    return tsp_solution;
+    // initialize the smallest distance as infinity
+    int smallest_path_distance = std::numeric_limits<int>::max();
+    // spd_index hold the index of the solution with the smallest path distance
+    int spd_index;
+    for(int i = 0; i < solution_vector.size(); i++)
+    {
+        int current_path_distance = solution_vector[i].full_distance;
+        
+        if(current_path_distance < smallest_path_distance)
+        {
+            spd_index = i;
+            smallest_path_distance = current_path_distance;
+        }
+    }
+
+    // return the nearest neighbour path with the smallest distance
+    return solution_vector[spd_index];
     
 }
 
