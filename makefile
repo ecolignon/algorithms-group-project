@@ -39,12 +39,15 @@ $(PROJ): $(OBJS)
 	@$(CXX) $(CXXFLAGS) -c $^
 
 zip:
-	zip TSP_Group45.zip *.cpp *.txt *.tour makefile README.md
+	zip code:TSP_Group45.zip *.cpp *.txt *.tour *.pdf makefile README.md
 
 clean:
 	rm *.o $(PROJ) *.zip *.tour
 
 solutions:
+	$(PROJ) test_example_3.txt
+	$(PROJ) test_example_2.txt
+	$(PROJ) test_example_1.txt
 	$(PROJ) test-input-1.txt
 	$(PROJ) test-input-2.txt
 	$(PROJ) test-input-3.txt
