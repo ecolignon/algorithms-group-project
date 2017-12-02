@@ -195,10 +195,10 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
         int smallest_distance = std::numeric_limits<int>::max();
         // declare variable to hold index mapping to smallest distance
         int sd_index = 0;
-        
+        int i;
         // for every coordinate check if distance is
         // less than smallest, update the two variables if so
-        for(int i = 0; i < v.size(); i++)
+        for(i = 0; i < v.size(); i++)
         {
             int curr_distance = get_distance(start, v[i]);
             
@@ -218,6 +218,9 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
         // mark it as traversed by removing it from v
         v.erase(v.begin() + sd_index);
     }
+    
+    int last_distance = get_distance(tsp_solution.path[0], tsp_solution.path[tsp_solution.path.size() - 1]);
+    tsp_solution.full_distance = tsp_solution.full_distance + last_distance;
     
     return tsp_solution;
     
