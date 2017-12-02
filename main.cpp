@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> fullRunTime = (end - start) * 1000;
     std::chrono::duration<double> solRunTime = (end - middle) * 1000;
-    
+    std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
     std::cout << "Full TSP run time for " << argument_file_name
     << " is " << fullRunTime.count() << "ms" << std::endl;
  
@@ -214,9 +214,9 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
         tsp_solution.path.push_back(start);
         // initialize tsp_solution distance to 0
         tsp_solution.full_distance = 0;
-        // reinit the copy of v
+        // reinit the copy of v 2
         copy_of_v2 = v;
-        // mark as traversed, by removing from copy of v
+        // mark as traversed, by removing from copy of v 2
         copy_of_v2.erase(copy_of_v2.begin() + start_index);
         
         // here, we'll loop through the vector of coordinates till all coordinates have
