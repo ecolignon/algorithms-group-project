@@ -66,7 +66,8 @@ int main(int argc, char **argv)
     //generate a tsp vector from the file name
 	generate_tsp_vector(argument_file_name, tsp_vector); 
     
-    auto middle = std::chrono::high_resolution_clock::now();
+
+
 	//test generate_tsp_vector functionality
 	/*for(int i= 0; i < tsp_vector.size(); i++)
 	{
@@ -80,19 +81,19 @@ int main(int argc, char **argv)
     struct solution tsp_solution = get_solution(tsp_vector);
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> fullRunTime = (end - start) * 1000;
-    std::chrono::duration<double> solRunTime = (end - middle) * 1000;
-    std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
+    
     std::cout << "Full TSP run time for " << argument_file_name
     << " is " << fullRunTime.count() << "ms" << std::endl;
  
-/*
+
+
     //test: show solution
-    std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
-    std::cout << "Path: " << std::endl;
-    for(int j = 0; j < tsp_solution.path.size(); j++)
-    {
-        std::cout << tsp_solution.path[j].identifier << std::endl;
-    }
+    // std::cout << "Distance: " << tsp_solution.full_distance << std::endl;
+    // std::cout << "Path: " << std::endl;
+    // for(int j = 0; j < tsp_solution.path.size(); j++)
+    // {
+    //     std::cout << tsp_solution.path[j].identifier << std::endl;
+    // }
     
     if(strcmp(argument_file_name, "tsp_example_1.txt") == 0)
     {
@@ -109,7 +110,7 @@ int main(int argc, char **argv)
         double ratio = (double)tsp_solution.full_distance/1573084;
         std::cout << "Ratio: " << ratio << std::endl;
     }
-*/
+
     // if saving the solution fails for some reason, output the
     // solution to the console
     if (save_solution(tsp_solution, argument_file_name) < 0)
@@ -187,40 +188,51 @@ void generate_tsp_vector(char* file_name, std::vector<struct tsp_coordinate> &v)
 struct solution get_solution(std::vector<struct tsp_coordinate> v)
 {
     int max_try_solutions = v.size();
-    // vector to store solutions
-    std::vector<struct solution> solution_vector;
+
+    /* This way we don't need to iterate through another array */
+    // initialize the ultimate solution and set its distance as infinity
+    struct solution ultimate_solution;
+    ultimate_solution.full_distance = std::numeric_limits<int>::max();
+
+
     // vector to remove traversed coordinates from;
     std::vector<struct tsp_coordinate> copy_of_v;
     std::vector<struct tsp_coordinate> copy_of_v2;
     if(max_try_solutions >= 200){
         max_try_solutions = 200;
     }
-    
-    
+
     // init copy 1 of v;
     copy_of_v = v;
-        
+
     // generate nearest neighbour solutions trying every coordinate as the start
     for(int j = 0; j < max_try_solutions; j ++)
     {
         // declare a solution struct
         struct solution tsp_solution;
 
-        // grab a random index to check
-        int start_index = rand()%copy_of_v.size();
+/* No reason to grab a random index, we should just iterate through from the end to reduce time */
         // get the starting place
-        struct tsp_coordinate start = copy_of_v[start_index];
+        int startIndex = copy_of_v.back().identifier;
+        struct tsp_coordinate start = copy_of_v.back(); //start with the last element of copy_of_v
+      
         // add the starting place to the solution path
         tsp_solution.path.push_back(start);
         // initialize tsp_solution distance to 0
         tsp_solution.full_distance = 0;
-        // reinit the copy of v 2
+      
+
+        // reinit the copy of v
         copy_of_v2 = v;
-        // mark as traversed, by removing from copy of v 2
-        copy_of_v2.erase(copy_of_v2.begin() + start_index);
-        
+        // mark as traversed, by removing the element from copy_of_v2
+        //swap element and the back element, to allow for constant time removal
+        struct tsp_coordinate temp = copy_of_v2[startIndex];
+        copy_of_v2[startIndex] = copy_of_v2.back();
+        copy_of_v2.back() = temp;
+        copy_of_v2.pop_back();
+
         // here, we'll loop through the vector of coordinates till all coordinates have
-        // been traverse(removed)
+        // been traversed (removed)
         while(copy_of_v2.size() > 0)
         {
             // initialize the current smallest distance as infinity
@@ -240,48 +252,35 @@ struct solution get_solution(std::vector<struct tsp_coordinate> v)
                     smallest_distance = curr_distance;
                 }
             }
-            
             // add the coordinate with the smallest distance to the solution path
             tsp_solution.path.push_back(copy_of_v2[sd_index]);
             // add the solution distance to the current solution distance
             tsp_solution.full_distance = tsp_solution.full_distance + smallest_distance;
             // set the coordinate with the smallest distance as the new starting place
             start = copy_of_v2[sd_index];
-            // mark it as traversed by removing it from v
+
+            // mark it as traversed by removing it from v2
             copy_of_v2.erase(copy_of_v2.begin() + sd_index);
         }
+
         // calculate the distance back to start
         int last_distance = get_distance(tsp_solution.path[0], tsp_solution.path[tsp_solution.path.size() - 1]);
         tsp_solution.full_distance = tsp_solution.full_distance + last_distance;
         
-        //add the solution to the solution vector
-        solution_vector.push_back(tsp_solution);
-        // mark solution as attempted by removing from v
-        copy_of_v.erase(copy_of_v.begin() + start_index);
-        
-    }
-    
-    // now we start our search for the path with the smallest distance
-    // based on our generated nearest neighbour solutions
-    
-    // initialize the smallest distance as infinity
-    int smallest_path_distance = std::numeric_limits<int>::max();
-    // spd_index hold the index of the solution with the smallest path distance
-    int spd_index;
-    for(int i = 0; i < solution_vector.size(); i++)
-    {
-        int current_path_distance = solution_vector[i].full_distance;
-        
-        if(current_path_distance < smallest_path_distance)
+        /* This way we don't need to iterate through another array */
+        // if the current solution is shorter than the previous best
+        if (tsp_solution.full_distance < ultimate_solution.full_distance)
         {
-            spd_index = i;
-            smallest_path_distance = current_path_distance;
+            ultimate_solution = tsp_solution;
+            //display_solution(tsp_solution);
         }
+
+        // mark solution as attempted by removing from v
+        copy_of_v.pop_back();
     }
 
     // return the nearest neighbour path with the smallest distance
-    return solution_vector[spd_index];
-    
+    return ultimate_solution;
 }
 
 
@@ -353,6 +352,8 @@ void display_solution(struct solution tsp_solution)
     std::cout << "Path: " << std::endl;
     for(int j = 0; j < tsp_solution.path.size(); j++)
     {
-        std::cout << tsp_solution.path[j].identifier << std::endl;
+        std::cout << tsp_solution.path[j].identifier << " ";
     }
+
+    std::cout << std::endl;
 }
