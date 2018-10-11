@@ -1,4 +1,4 @@
-# CS_325_Group_Project
+# Nearest Neighbor Group Project
 
 Use the provided makefile to accomplish most basic functionality.
 
